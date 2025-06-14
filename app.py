@@ -11,6 +11,10 @@ import plotly.express as px
 import plotly.graph_objects as go
 import joblib
 from statsmodels.tsa.holtwinters import ExponentialSmoothing
+from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
+from sklearn.naive_bayes import GaussianNB
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.preprocessing import StandardScaler
 
 st.set_page_config(page_title="Smart Data Manager", layout="wide", initial_sidebar_state="auto")
 
@@ -126,18 +130,22 @@ if uploaded_file:
         X = df[ml_features]
         y = df[ml_target]
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-        model = LinearRegression()
-        model.fit(X_train, y_train)
-        y_pred = model.predict(X_test)
-        mse = mean_squared_error(y_test, y_pred)
-        r2 = r2_score(y_test, y_pred)
 
-        st.write(f"**R² Score:** {r2:.2f}")
-        st.write(f"**Mean Squared Error:** {mse:.2f}")
+        models = {
+            'Linear Regression': LinearRegression(),
+            'Random Forest Regressor': RandomForestRegressor(),
+        }
 
-        st.download_button("Download Trained Model", data=joblib.dump(model, 'model.pkl')[0], file_name="linear_model.pkl")
+        for name, model in models.items():
+            model.fit(X_train, y_train)
+            y_pred = model.predict(X_test)
+            mse = mean_squared_error(y_test, y_pred)
+            r2 = r2_score(y_test, y_pred)
+            st.write(f"**{name}**")
+            st.write(f"R² Score: {r2:.2f}, MSE: {mse:.2f}")
+            st.download_button(f"Download {name} Model", data=joblib.dump(model, f'{name.replace(" ", "_").lower()}.pkl')[0], file_name=f"{name.replace(' ', '_').lower()}.pkl")
 
-    st.subheader("🧠 Classification Model")
+    st.subheader("🧠 Classification Models")
     cat_target = st.selectbox("Select categorical target", df.select_dtypes(include=['object']).columns, key="cls_target")
     if cat_target:
         df = df.dropna(subset=[cat_target])
@@ -146,14 +154,22 @@ if uploaded_file:
             X = df[cls_features]
             y = df[cat_target]
             X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-            model_cls = LogisticRegression(max_iter=1000)
-            model_cls.fit(X_train, y_train)
-            y_pred_cls = model_cls.predict(X_test)
-            acc = accuracy_score(y_test, y_pred_cls)
-            st.write(f"**Accuracy:** {acc:.2f}")
-            st.text("Classification Report:")
-            st.text(classification_report(y_test, y_pred_cls))
-            st.download_button("Download Classification Model", data=joblib.dump(model_cls, 'clf_model.pkl')[0], file_name="classification_model.pkl")
+
+            classifiers = {
+                "Logistic Regression": LogisticRegression(max_iter=1000),
+                "Random Forest Classifier": RandomForestClassifier(),
+                "Naive Bayes": GaussianNB(),
+                "Decision Tree": DecisionTreeClassifier()
+            }
+
+            for name, model_cls in classifiers.items():
+                model_cls.fit(X_train, y_train)
+                y_pred_cls = model_cls.predict(X_test)
+                acc = accuracy_score(y_test, y_pred_cls)
+                st.write(f"**{name}** - Accuracy: {acc:.2f}")
+                st.text("Classification Report:")
+                st.text(classification_report(y_test, y_pred_cls))
+                st.download_button(f"Download {name} Model", data=joblib.dump(model_cls, f'{name.replace(" ", "_").lower()}_model.pkl')[0], file_name=f"{name.replace(' ', '_').lower()}_model.pkl")
 
     st.subheader("🧾 Predict from Input Form")
     if ml_features:
