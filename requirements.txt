@@ -1,5 +1,7 @@
-# Streamlit core and extras
+# Core
 streamlit>=1.25
+
+# Streamlit Extras (includes stylable_container and animated_headline)
 streamlit-extras==0.2.7
 
 # Data handling
@@ -7,7 +9,7 @@ pandas>=1.5
 openpyxl>=3.1
 xlsxwriter>=3.1
 
-# Visualization
+# Plotting
 matplotlib>=3.7
 seaborn>=0.12
 plotly>=5.15
@@ -17,5 +19,5 @@ scikit-learn>=1.2
 joblib>=1.2
 statsmodels>=0.14
 
-# PDF generation
+# PDF Export
 fpdf>=1.7
