@@ -1,9 +1,7 @@
-import streamlit as st
-st.set_page_config(page_title="Smart Data Manager", layout="wide")
-
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
+import streamlit as st
 from fpdf import FPDF
 import io
 from sklearn.linear_model import LinearRegression, LogisticRegression
@@ -13,7 +11,8 @@ import plotly.express as px
 import joblib
 from statsmodels.tsa.holtwinters import ExponentialSmoothing
 
-st.title("📊 Smart Data Manager & Analyzer")
+st.set_page_config(page_title="Smart Data Manager", layout="wide")
+st.title("\U0001F4CA Smart Data Manager & Analyzer")
 
 uploaded_file = st.file_uploader("Upload your dataset", type=["csv", "xlsx", "json"])
 
@@ -32,20 +31,24 @@ if uploaded_file:
         st.error(f"Error loading file: {e}")
         st.stop()
 
-    st.subheader("🔍 Raw Data Preview")
+    if not isinstance(df, pd.DataFrame):
+        st.error("Uploaded file could not be processed as a DataFrame.")
+        st.stop()
+
+    st.subheader("\U0001F50D Raw Data Preview")
     st.dataframe(df.head())
 
-    st.subheader("🧹 Data Cleaning Options")
+    st.subheader("\U0001FA79 Data Cleaning Options")
     if st.checkbox("Remove Duplicates"):
         df.drop_duplicates(inplace=True)
     if st.checkbox("Fill Missing Values with Mean"):
         df.fillna(df.mean(numeric_only=True), inplace=True)
 
-    st.subheader("📈 Summary Statistics")
+    st.subheader("\U0001F4C8 Summary Statistics")
     stats = df.describe()
     st.dataframe(stats)
 
-    st.subheader("📌 Column Filtering")
+    st.subheader("\U0001F4CC Column Filtering")
     selected_column = st.selectbox("Choose column to filter", df.columns)
     if pd.api.types.is_numeric_dtype(df[selected_column]):
         filter_min = float(df[selected_column].min())
@@ -53,7 +56,7 @@ if uploaded_file:
         user_range = st.slider("Select range", filter_min, filter_max, (filter_min, filter_max))
         df = df[(df[selected_column] >= user_range[0]) & (df[selected_column] <= user_range[1])]
 
-    st.subheader("📊 Correlation Heatmap")
+    st.subheader("\U0001F4C9 Correlation Heatmap")
     numeric_df = df.select_dtypes(include=['float64', 'int64'])
     if not numeric_df.empty:
         fig, ax = plt.subplots(figsize=(10, 6))
@@ -62,7 +65,7 @@ if uploaded_file:
     else:
         st.info("No numeric columns to show heatmap.")
 
-    st.subheader("📉 Visual Comparison Between Columns")
+    st.subheader("\U0001F4C9 Visual Comparison Between Columns")
     col1, col2 = st.columns(2)
     with col1:
         x_col = st.selectbox("Select X-axis column", df.columns, key="x")
@@ -73,7 +76,7 @@ if uploaded_file:
         fig2 = px.scatter(df, x=x_col, y=y_col, title=f"{x_col} vs {y_col}")
         st.plotly_chart(fig2)
 
-    st.subheader("📦 Bar & Pie Charts by Category")
+    st.subheader("\U0001F4E6 Bar & Pie Charts by Category")
     cat_col = st.selectbox("Choose categorical column for charts", df.select_dtypes(include='object').columns)
     if cat_col:
         bar_data = df[cat_col].value_counts()
@@ -83,7 +86,7 @@ if uploaded_file:
         fig4 = px.pie(names=bar_data.index, values=bar_data.values, title="Pie Chart")
         st.plotly_chart(fig4)
 
-    st.subheader("📅 Forecasting Chart")
+    st.subheader("\U0001F4C5 Forecasting Chart")
     time_col = st.selectbox("Select time column for forecasting", df.columns)
     target_col = st.selectbox("Select target column for forecasting", df.select_dtypes(include=['float64', 'int64']).columns, key="forecast")
     if time_col and target_col:
@@ -92,18 +95,16 @@ if uploaded_file:
             df = df.sort_values(by=time_col)
             model = ExponentialSmoothing(df[target_col], trend='add', seasonal=None).fit()
             forecast = model.forecast(10)
-            future_dates = pd.date_range(start=df[time_col].iloc[-1], periods=10, freq='D')
-            fig5 = px.line(
-                x=list(df[time_col]) + list(future_dates),
-                y=list(df[target_col]) + list(forecast),
-                labels={'x': 'Date', 'y': target_col},
-                title=f"Forecasting {target_col}"
-            )
+            future_dates = pd.date_range(df[time_col].iloc[-1], periods=11, freq='D')[1:]
+            fig5 = px.line(x=list(df[time_col]) + list(future_dates), 
+                           y=list(df[target_col]) + list(forecast), 
+                           labels={'x': 'Date', 'y': target_col}, 
+                           title=f"Forecasting {target_col}")
             st.plotly_chart(fig5)
         except Exception as e:
             st.warning(f"Unable to forecast: {e}")
 
-    st.subheader("🤖 Machine Learning Insight: Linear Regression")
+    st.subheader("\U0001F916 Machine Learning Insight: Linear Regression")
     ml_cols = df.select_dtypes(include=['float64', 'int64']).columns.tolist()
     ml_target = st.selectbox("Select target variable", ml_cols, key="target")
     ml_features = st.multiselect("Select feature columns", [col for col in ml_cols if col != ml_target])
@@ -121,9 +122,11 @@ if uploaded_file:
         st.write(f"**R² Score:** {r2:.2f}")
         st.write(f"**Mean Squared Error:** {mse:.2f}")
 
-        st.download_button("Download Trained Model", data=joblib.dump(model, 'model.pkl')[0], file_name="linear_model.pkl")
+        joblib.dump(model, 'linear_model.pkl')
+        with open("linear_model.pkl", "rb") as f:
+            st.download_button("Download Trained Model", data=f, file_name="linear_model.pkl")
 
-    st.subheader("🧠 Classification Model")
+    st.subheader("\U0001F9E0 Classification Model")
     cat_target = st.selectbox("Select categorical target", df.select_dtypes(include=['object']).columns, key="cls_target")
     if cat_target:
         df = df.dropna(subset=[cat_target])
@@ -139,9 +142,11 @@ if uploaded_file:
             st.write(f"**Accuracy:** {acc:.2f}")
             st.text("Classification Report:")
             st.text(classification_report(y_test, y_pred_cls))
-            st.download_button("Download Classification Model", data=joblib.dump(model_cls, 'clf_model.pkl')[0], file_name="classification_model.pkl")
+            joblib.dump(model_cls, 'clf_model.pkl')
+            with open("clf_model.pkl", "rb") as f:
+                st.download_button("Download Classification Model", data=f, file_name="classification_model.pkl")
 
-    st.subheader("🧾 Predict from Input Form")
+    st.subheader("\U0001F4CB Predict from Input Form")
     if ml_features:
         st.write("### Enter values for prediction:")
         inputs = [st.number_input(f"{feat}", value=float(df[feat].mean())) for feat in ml_features]
@@ -151,7 +156,7 @@ if uploaded_file:
             prediction = model.predict([inputs])[0]
             st.success(f"Predicted {ml_target}: {prediction:.2f}")
 
-    st.subheader("📋 Generate PDF Report")
+    st.subheader("\U0001F4CB Generate PDF Report")
     if st.button("Generate PDF Report"):
         pdf = FPDF()
         pdf.add_page()
@@ -162,13 +167,15 @@ if uploaded_file:
 
         pdf_output = io.BytesIO()
         pdf.output(pdf_output)
-        st.download_button("Download PDF Report", data=pdf_output.getvalue(), file_name="data_report.pdf", mime="application/pdf")
+        pdf_output.seek(0)
+        st.download_button("Download PDF Report", data=pdf_output, file_name="data_report.pdf", mime="application/pdf")
 
-    st.subheader("💾 Download Cleaned Data")
+    st.subheader("\U0001F4BE Download Cleaned Data")
     csv = df.to_csv(index=False).encode('utf-8')
     st.download_button("Download CSV", data=csv, file_name="cleaned_data.csv", mime='text/csv')
 
     excel_output = io.BytesIO()
     with pd.ExcelWriter(excel_output, engine='xlsxwriter') as writer:
         df.to_excel(writer, index=False, sheet_name='Cleaned Data')
-    st.download_button("Download Excel", data=excel_output.getvalue(), file_name="cleaned_data.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    excel_output.seek(0)
+    st.download_button("Download Excel", data=excel_output, file_name="cleaned_data.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
