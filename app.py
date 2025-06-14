@@ -8,6 +8,7 @@ from sklearn.linear_model import LinearRegression, LogisticRegression
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error, r2_score, accuracy_score, classification_report
 import plotly.express as px
+import plotly.graph_objects as go
 import joblib
 from statsmodels.tsa.holtwinters import ExponentialSmoothing
 
@@ -79,6 +80,15 @@ if uploaded_file:
     if pd.api.types.is_numeric_dtype(df[y_col]):
         fig2 = px.scatter(df, x=x_col, y=y_col, title=f"{x_col} vs {y_col}")
         st.plotly_chart(fig2)
+
+        fig_line = px.line(df, x=x_col, y=y_col, title=f"Line Chart: {x_col} vs {y_col}")
+        st.plotly_chart(fig_line)
+
+        fig_box = px.box(df, x=x_col, y=y_col, title=f"Box Plot: {x_col} vs {y_col}")
+        st.plotly_chart(fig_box)
+
+        fig_hist = px.histogram(df, x=y_col, nbins=30, title=f"Histogram of {y_col}")
+        st.plotly_chart(fig_hist)
 
     st.subheader("📦 Bar & Pie Charts by Category")
     cat_col = st.selectbox("Choose categorical column for charts", df.select_dtypes(include='object').columns)
