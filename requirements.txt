@@ -1,12 +1,12 @@
 streamlit
+streamlit-extras
 pandas
 seaborn
 matplotlib
 plotly
 scikit-learn
 statsmodels
-xlsxwriter
 fpdf
-joblib
 openpyxl
-streamlit-extras
+xlsxwriter
+joblib
