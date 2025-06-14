@@ -2,7 +2,6 @@ import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 import streamlit as st
-from streamlit_extras.stylable_container import stylable_container
 from fpdf import FPDF
 import io
 from sklearn.linear_model import LinearRegression, LogisticRegression
@@ -14,8 +13,14 @@ from statsmodels.tsa.holtwinters import ExponentialSmoothing
 
 st.set_page_config(page_title="Smart Data Manager", layout="wide", initial_sidebar_state="auto")
 
-with stylable_container(key="headline", css="background-color: #111827; color: white; padding: 20px; border-radius: 12px;"):
-    st.markdown("<h1 style='font-size:2em;'>📊 Smart Data Manager & Analyzer</h1>", unsafe_allow_html=True)
+st.markdown(
+    """
+    <div style='background-color: #111827; padding: 20px; border-radius: 12px'>
+        <h1 style='color: white; font-size: 2em;'>📊 Smart Data Manager & Analyzer</h1>
+    </div>
+    """,
+    unsafe_allow_html=True
+)
 
 uploaded_file = st.file_uploader("📂 Upload your dataset", type=["csv", "xlsx", "json"])
 
