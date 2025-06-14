@@ -5,8 +5,9 @@ seaborn
 matplotlib
 plotly
 scikit-learn
-fpdf
 joblib
+fpdf
 openpyxl
-xlsxwriter
 statsmodels
+xlsxwriter
+streamlit-extras
