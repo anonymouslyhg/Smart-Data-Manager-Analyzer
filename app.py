@@ -10,14 +10,17 @@ from sklearn.metrics import mean_squared_error, r2_score, accuracy_score, classi
 import plotly.express as px
 import joblib
 from statsmodels.tsa.holtwinters import ExponentialSmoothing
+from streamlit_extras.stylable_container import stylable_container
+from streamlit_extras.metric_cards import style_metric_cards
+from streamlit_extras.let_it_rain import rain
 
 st.set_page_config(page_title="Smart Data Manager", layout="wide")
 st.title("📊 Smart Data Manager & Analyzer")
+rain(emoji="📈", font_size=30, falling_speed=7, animation_length=1)
 
-uploaded_file = st.file_uploader("Upload your dataset", type=["csv", "xlsx", "json"])
+uploaded_file = st.file_uploader("📁 Upload your dataset", type=["csv", "xlsx", "json"])
 
 if uploaded_file:
-    # Load data
     try:
         if uploaded_file.name.endswith(".csv"):
             df = pd.read_csv(uploaded_file)
@@ -26,14 +29,17 @@ if uploaded_file:
         elif uploaded_file.name.endswith(".json"):
             df = pd.read_json(uploaded_file)
         else:
-            st.error("Unsupported file type")
+            st.error("❌ Unsupported file type")
             st.stop()
     except Exception as e:
-        st.error(f"Error loading file: {e}")
+        st.exception(e)
         st.stop()
 
-    st.subheader("🔍 Raw Data Preview")
-    st.dataframe(df.head())
+    st.success("✅ File uploaded and loaded successfully!")
+
+    with stylable_container("raw-preview", css="background-color: #f0f2f6; border-radius: 10px; padding: 1em"):
+        st.subheader("🔍 Raw Data Preview")
+        st.dataframe(df.head(), use_container_width=True)
 
     st.subheader("🧹 Data Cleaning Options")
     if st.checkbox("Remove Duplicates"):
@@ -44,6 +50,7 @@ if uploaded_file:
     st.subheader("📈 Summary Statistics")
     stats = df.describe()
     st.dataframe(stats)
+    style_metric_cards(background_color="#FFFFFF", border_left_color="#0072C6")
 
     st.subheader("📌 Column Filtering")
     selected_column = st.selectbox("Choose column to filter", df.columns)
@@ -53,11 +60,11 @@ if uploaded_file:
         user_range = st.slider("Select range", filter_min, filter_max, (filter_min, filter_max))
         df = df[(df[selected_column] >= user_range[0]) & (df[selected_column] <= user_range[1])]
 
-    st.subheader("📊 Correlation Heatmap")
+    st.subheader("🌡️ Correlation Heatmap")
     numeric_df = df.select_dtypes(include=['float64', 'int64'])
     if not numeric_df.empty:
         fig, ax = plt.subplots(figsize=(10, 6))
-        sns.heatmap(numeric_df.corr(), annot=True, cmap="coolwarm", ax=ax)
+        sns.heatmap(numeric_df.corr(), annot=True, cmap="viridis", ax=ax)
         st.pyplot(fig)
     else:
         st.info("No numeric columns to show heatmap.")
@@ -70,14 +77,14 @@ if uploaded_file:
         y_col = st.selectbox("Select Y-axis column", df.columns, key="y")
 
     if pd.api.types.is_numeric_dtype(df[y_col]):
-        fig2 = px.scatter(df, x=x_col, y=y_col, title=f"{x_col} vs {y_col}")
-        st.plotly_chart(fig2)
+        fig2 = px.scatter(df, x=x_col, y=y_col, color=x_col, title=f"{x_col} vs {y_col}", template="plotly_dark")
+        st.plotly_chart(fig2, use_container_width=True)
 
     st.subheader("📦 Bar & Pie Charts by Category")
     cat_col = st.selectbox("Choose categorical column for charts", df.select_dtypes(include='object').columns)
     if cat_col:
         bar_data = df[cat_col].value_counts()
-        fig3 = px.bar(x=bar_data.index, y=bar_data.values, title="Bar Chart")
+        fig3 = px.bar(x=bar_data.index, y=bar_data.values, title="Bar Chart", template="ggplot2")
         st.plotly_chart(fig3)
 
         fig4 = px.pie(names=bar_data.index, values=bar_data.values, title="Pie Chart")
@@ -115,8 +122,8 @@ if uploaded_file:
         mse = mean_squared_error(y_test, y_pred)
         r2 = r2_score(y_test, y_pred)
 
-        st.write(f"**R² Score:** {r2:.2f}")
-        st.write(f"**Mean Squared Error:** {mse:.2f}")
+        st.metric(label="R² Score", value=f"{r2:.2f}")
+        st.metric(label="Mean Squared Error", value=f"{mse:.2f}")
 
         st.download_button("Download Trained Model", data=joblib.dump(model, 'model.pkl')[0], file_name="linear_model.pkl")
 
@@ -133,7 +140,7 @@ if uploaded_file:
             model_cls.fit(X_train, y_train)
             y_pred_cls = model_cls.predict(X_test)
             acc = accuracy_score(y_test, y_pred_cls)
-            st.write(f"**Accuracy:** {acc:.2f}")
+            st.metric(label="Accuracy", value=f"{acc:.2f}")
             st.text("Classification Report:")
             st.text(classification_report(y_test, y_pred_cls))
             st.download_button("Download Classification Model", data=joblib.dump(model_cls, 'clf_model.pkl')[0], file_name="classification_model.pkl")
