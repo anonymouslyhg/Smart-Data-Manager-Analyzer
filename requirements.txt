@@ -1,12 +1,21 @@
+# Streamlit core and extras
 streamlit>=1.25
+streamlit-extras==0.2.7
+
+# Data handling
 pandas>=1.5
-matplotlib>=3.7
-seaborn>=0.12
-scikit-learn>=1.2
-plotly>=5.15
-fpdf>=1.7
 openpyxl>=3.1
 xlsxwriter>=3.1
-statsmodels>=0.14
+
+# Visualization
+matplotlib>=3.7
+seaborn>=0.12
+plotly>=5.15
+
+# Machine learning
+scikit-learn>=1.2
 joblib>=1.2
-streamlit-extras==0.2.7
+statsmodels>=0.14
+
+# PDF generation
+fpdf>=1.7
